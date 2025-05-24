@@ -1,7 +1,7 @@
 Project Plan: Local Job Board / Freelance Platform
 1. Project Overview
 
-Name: Kazi-kitaa (suggested local name — Swahili for “Neighborhood Work”)
+Name: Kazi-kitaa (suggested local name — Swahili for “Street Work”)
 Objective: Connect local service providers (e.g., welders, painters, tutors) with people who need their services based on proximity, availability, and skills.
 Target Users:
 
