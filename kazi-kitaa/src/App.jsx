@@ -13,6 +13,16 @@ import RefundScreen from './pages/Refund'
 import ApplyScreen from './pages/Apply'
 import SubmissionScreen from './pages/Submission'
 import RequestPaymentScreen from './pages/RequestPay'
+import RegisterScreen from './pages/Register'
+import LoginScreen from './pages/Login'
+import ClientDashboard from './pages/ClientDashboard'
+import WorkerDashboard from './pages/WorkerDashboard'
+import BookingScreen from './pages/Booking'
+import ChatScreen from './pages/Chat'
+import RatingScreen from './pages/Rating'
+import AdminDashboard from './pages/Admin'
+import OfflineScreen from './pages/Offline'
+import JobDescriptionScreen from './pages/JobDescription'
 
 function App() {
   const [location, setLocation] = useState('')
@@ -50,6 +60,16 @@ function App() {
             <Route path="/apply" element={<ApplyScreen></ApplyScreen>}></Route>
             <Route path="/submit" element={<SubmissionScreen></SubmissionScreen>}></Route>
             <Route path="/request-pay" element={<RequestPaymentScreen></RequestPaymentScreen>}></Route>
+            <Route path='/register' element={<RegisterScreen/>}></Route>
+            <Route path='/login' element={<LoginScreen />}></Route>
+            <Route path='/client' element={<ClientDashboard/>}></Route>
+            <Route path='/worker' element={<WorkerDashboard/>}></Route>
+            <Route path='/book' element={<BookingScreen/>}></Route>
+            <Route path='/chat' element={<ChatScreen/>}></Route>
+            <Route path='/rate' element={<RatingScreen/>}></Route>
+            <Route path='/admin' element={<AdminDashboard />}></Route>
+            <Route path="/offline" element={<OfflineScreen />}></Route>
+            <Route path="/job" element={<JobDescriptionScreen />}></Route>
           </Routes>
       
     </Router>

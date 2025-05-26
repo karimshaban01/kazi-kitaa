@@ -1,0 +1,688 @@
+WEB PAGES
+---
+
+## 🧭 Suggested Webpages & Flow
+
+### 1. **Landing Page (`/`)**
+
+* **Audience:** General visitors (first-time users)
+* **Content:**
+
+  * Hero section with call-to-action: “Find Local Help” or “Post a Job”
+  * Intro: What is Kazi-kitaa?
+  * Buttons:
+
+    * \[Hire a Worker] → `/search`
+    * \[Offer Services] → `/register`
+  * Language switcher (Swahili ↔ English)
+  * Testimonials, how it works, FAQ
+
+---
+
+### 2. **Registration Page (`/register`)**
+
+* **User Selects Role:**
+
+  * [ ] I’m a Worker
+  * [ ] I’m a Client
+* Form Fields (conditional by role):
+
+  * Name, phone (OTP optional), location
+  * For Workers: Professions, skills, rate, availability calendar, upload photo/certificates
+  * For Clients: General info + option to post a job immediately
+* Submit → Redirect to Dashboard
+
+---
+
+### 3. **Login Page (`/login`)**
+
+* Login via:
+
+  * Phone number + OTP (optional password fallback)
+  * Google/Facebook (optional)
+* Role-based redirect:
+
+  * Workers → `/dashboard/worker`
+  * Clients → `/dashboard/client`
+
+---
+
+### 4. **Worker Dashboard (`/dashboard/worker`)**
+
+* Tabs:
+
+  * **My Profile**: Edit skills, rates, photos
+  * **My Calendar**: Set/update availability
+  * **Job Requests**: Accept/reject new gigs
+  * **Current Jobs**: Track status (in progress, completed)
+  * **My Ratings**: View client feedback
+
+---
+
+### 5. **Client Dashboard (`/dashboard/client`)**
+
+* Tabs:
+
+  * **Post a Job**: Form (job type, budget, description, preferred time, location)
+  * **My Jobs**: Track posted jobs, statuses
+  * **Search Workers**: Map/list view → `/search`
+  * **Chat Inbox**: Messages with workers
+  * **My Ratings**: Rate workers after completion
+
+---
+
+### 6. **Job Search Page (`/search`)**
+
+* Map + List hybrid
+* Filters:
+
+  * Profession (e.g., Plumber, Electrician)
+  * Rating
+  * Price range
+  * Availability
+* Worker cards:
+
+  * Profile picture, distance, skill summary, rating
+  * \[View Profile] → `/worker/:id`
+  * \[Book Now]
+
+---
+
+### 7. **Worker Profile Page (`/worker/:id`)**
+
+* Includes:
+
+  * Name, location, skill tags, ratings, work history
+  * Availability calendar
+  * Button: \[Book This Worker]
+
+---
+
+### 8. **Booking Page (`/book/:worker_id`)**
+
+* Auto-filled from search/profile
+* Client inputs:
+
+  * Job details, preferred time, budget
+* Confirm → Sends request to worker
+* Booking status updates: pending → accepted/rejected → in-progress → completed
+
+---
+
+### 9. **Chat/Communication Page (`/chat`)**
+
+* In-app messaging or redirect to WhatsApp
+* Optional: Masked phone numbers for privacy
+
+---
+
+### 10. **Ratings & Review Page (`/review/:job_id`)**
+
+* 1–5 stars
+* Optional comments
+* For both worker and client
+
+---
+
+### 11. **Admin Panel (`/admin`)** *(Role-restricted)*
+
+* User Management
+* Reported Jobs/Disputes
+* Worker Verification Requests
+* Analytics Dashboard (active users, job counts)
+
+---
+
+### 12. **Error / Maintenance / Offline Pages**
+
+* `/offline` → “You’re offline. Retry or use SMS service.”
+* `/error` → General fallback for server issues
+
+---
+
+## 🔄 Logical User Flow (Client)
+
+```
+Home → Register/Login → Post Job or Search → View Worker → Book → Chat → Job Done → Rate Worker
+```
+
+## 🔄 Logical User Flow (Worker)
+
+```
+Home → Register/Login → Set Profile + Availability → Receive Booking → Accept → Complete → Get Rated
+```
+
+---
+
+## 🧠 Optional Enhancements
+
+* **Agent-assisted job posting** for feature-phone users.
+* **“Nearby jobs” map** for workers without active listings.
+* **“Verified Worker” badge** after admin checks ID or reviews.
+* **SMS fallback**: Post job via SMS for rural clients.
+
+---
+
+DATABASE
+
+---
+
+## 📦 Core Database Tables (PostgreSQL + PostGIS for location)
+
+---
+
+### **1. `users`**
+
+Holds all users — both clients and workers.
+
+| Field          | Type                              | Description          |
+| -------------- | --------------------------------- | -------------------- |
+| id             | UUID (PK)                         | Unique user ID       |
+| phone\_number  | VARCHAR                           | Login/OTP            |
+| password\_hash | VARCHAR                           | Optional             |
+| full\_name     | VARCHAR                           | Full name            |
+| role           | ENUM('client', 'worker', 'admin') | User role            |
+| language       | ENUM('en', 'sw')                  | Preferred language   |
+| profile\_photo | TEXT                              | URL to profile image |
+| created\_at    | TIMESTAMP                         | Account creation     |
+| last\_active   | TIMESTAMP                         | Last login           |
+| is\_verified   | BOOLEAN                           | Admin verified?      |
+
+---
+
+### **2. `worker_profiles`**
+
+Additional fields only for service providers.
+
+| Field               | Type                 | Description                  |
+| ------------------- | -------------------- | ---------------------------- |
+| user\_id            | UUID (FK → users.id) | One-to-one with users        |
+| bio                 | TEXT                 | Short description or tagline |
+| hourly\_rate        | DECIMAL              | Suggested rate               |
+| experience\_years   | INTEGER              | Work experience              |
+| location            | GEOGRAPHY(Point)     | GPS location (for proximity) |
+| service\_radius\_km | INTEGER              | How far they travel          |
+| available           | BOOLEAN              | Quick status indicator       |
+
+---
+
+### **3. `services`**
+
+All available services (painter, plumber, etc.).
+
+| Field    | Type        | Description       |
+| -------- | ----------- | ----------------- |
+| id       | SERIAL (PK) |                   |
+| name\_en | VARCHAR     | English name      |
+| name\_sw | VARCHAR     | Swahili name      |
+| icon     | TEXT        | Icon URL or class |
+
+---
+
+### **4. `worker_services`**
+
+Many-to-many between workers and services.
+
+| Field       | Type                   | Description |
+| ----------- | ---------------------- | ----------- |
+| worker\_id  | UUID (FK → users.id)   |             |
+| service\_id | INT (FK → services.id) |             |
+
+---
+
+### **5. `jobs`**
+
+Posted jobs from clients.
+
+| Field         | Type                                                                | Description             |
+| ------------- | ------------------------------------------------------------------- | ----------------------- |
+| id            | UUID (PK)                                                           |                         |
+| client\_id    | UUID (FK → users.id)                                                | Posted by               |
+| service\_id   | INT (FK → services.id)                                              | Service type            |
+| description   | TEXT                                                                | Job details             |
+| location      | GEOGRAPHY(Point)                                                    | Where work will be done |
+| scheduled\_at | TIMESTAMP                                                           | Preferred date/time     |
+| budget        | DECIMAL                                                             | Max offer               |
+| status        | ENUM('pending', 'booked', 'in\_progress', 'completed', 'cancelled') |                         |
+| created\_at   | TIMESTAMP                                                           | Posted when             |
+
+---
+
+### **6. `bookings`**
+
+Track job offers and assignments.
+
+| Field         | Type                                                              | Description      |
+| ------------- | ----------------------------------------------------------------- | ---------------- |
+| id            | UUID (PK)                                                         |                  |
+| job\_id       | UUID (FK → jobs.id)                                               | Job being booked |
+| worker\_id    | UUID (FK → users.id)                                              | Assigned worker  |
+| accepted\_at  | TIMESTAMP                                                         | Worker accepted  |
+| completed\_at | TIMESTAMP                                                         | Marked completed |
+| status        | ENUM('pending', 'accepted', 'rejected', 'cancelled', 'completed') |                  |
+
+---
+
+### **7. `ratings`**
+
+Post-job feedback from both sides.
+
+| Field       | Type                 | Description      |
+| ----------- | -------------------- | ---------------- |
+| id          | UUID (PK)            |                  |
+| from\_user  | UUID (FK → users.id) | Reviewer         |
+| to\_user    | UUID (FK → users.id) | Reviewee         |
+| job\_id     | UUID (FK → jobs.id)  | Related job      |
+| rating      | INTEGER (1–5)        | Stars            |
+| comment     | TEXT                 | Optional message |
+| created\_at | TIMESTAMP            |                  |
+
+---
+
+### **8. `availability`**
+
+Worker's working hours.
+
+| Field       | Type                 | Description |
+| ----------- | -------------------- | ----------- |
+| id          | SERIAL (PK)          |             |
+| worker\_id  | UUID (FK → users.id) |             |
+| weekday     | ENUM('Mon'...'Sun')  |             |
+| start\_time | TIME                 |             |
+| end\_time   | TIME                 |             |
+
+---
+
+### **9. `messages`**
+
+In-app chat between users.
+
+| Field        | Type                 | Description |
+| ------------ | -------------------- | ----------- |
+| id           | UUID (PK)            |             |
+| sender\_id   | UUID (FK → users.id) |             |
+| receiver\_id | UUID (FK → users.id) |             |
+| message      | TEXT                 | Content     |
+| sent\_at     | TIMESTAMP            |             |
+| job\_id      | UUID (FK → jobs.id)  | Optional    |
+
+---
+
+### **10. `notifications`**
+
+System alerts (e.g., job accepted, new message).
+
+| Field       | Type                 | Description                             |
+| ----------- | -------------------- | --------------------------------------- |
+| id          | UUID (PK)            |                                         |
+| user\_id    | UUID (FK → users.id) | Receiver                                |
+| type        | TEXT                 | e.g., `job_status`, `message`, `review` |
+| content     | TEXT                 | Text to display                         |
+| is\_read    | BOOLEAN              | Seen or not                             |
+| created\_at | TIMESTAMP            |                                         |
+
+---
+
+### **11. `admins`**
+
+Staff users for managing the platform.
+
+| Field       | Type                 | Description                        |
+| ----------- | -------------------- | ---------------------------------- |
+| id          | UUID (FK → users.id) | Can be extended from `users` table |
+| permissions | JSONB                | Define actions allowed             |
+
+---
+
+## 🔁 Optional Enhancements
+
+* **`worker_documents`** – Store file uploads like certificates.
+* **`job_photos`** – Before/after work images.
+* **`disputes`** – For complaint resolution.
+* **`agent_assists`** – Track human agents who help offline clients/workers.
+
+---
+
+## 📍 Spatial Index
+
+Ensure `location` fields in `jobs` and `worker_profiles` are indexed using:
+
+```sql
+CREATE INDEX ON worker_profiles USING GIST (location);
+CREATE INDEX ON jobs USING GIST (location);
+```
+
+This supports fast proximity searches using PostGIS like:
+
+```sql
+SELECT * FROM worker_profiles
+WHERE ST_DWithin(location, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326), :radius);
+```
+
+---
+
+TIMELINE
+
+---
+
+## 🗓 **Kazi-kitaa: 1-Week MVP Timeline**
+
+---
+
+### ✅ **Day 1: Project Setup & Database Schema**
+
+**Goals:**
+
+* Set up project repositories and basic environment.
+* Define and migrate core database schema.
+* Set up backend framework and folder structure.
+
+**Tasks:**
+
+* Set up GitHub repo, Docker, virtualenv, CI pipeline.
+* Initialize backend (e.g., Django/Express).
+* Create `users`, `worker_profiles`, `services`, `jobs`, `bookings` tables.
+* Configure PostGIS for location queries.
+* Build seeders for initial service types.
+
+---
+
+### ✅ **Day 2: User Auth + Role-based Access**
+
+**Goals:**
+
+* Build user registration/login with role selection (client/worker).
+* Protect routes with role-based access.
+
+**Tasks:**
+
+* Implement login via phone/email OTP (or mock password-based for MVP).
+* Create role middleware (client vs worker).
+* Basic dashboard response per role (API or frontend view).
+* Mobile-first UI layout scaffold (React/Flutter).
+
+---
+
+### ✅ **Day 3: Job Posting + Worker Profiles**
+
+**Goals:**
+
+* Clients can post jobs.
+* Workers can edit profiles, list services, and update locations.
+
+**Tasks:**
+
+* API for job creation (with location, description, budget).
+* API/UI for worker profile setup and service selection.
+* Store geolocation in PostGIS.
+* Basic frontend forms and data posting.
+
+---
+
+### ✅ **Day 4: Location Search + Booking**
+
+**Goals:**
+
+* Implement map/list search for nearby workers.
+* Clients can request bookings.
+
+**Tasks:**
+
+* API to search workers within radius using PostGIS.
+* Filter workers by service, rating, availability.
+* Create booking flow: job → select worker → send request.
+* Worker API to accept/reject bookings.
+
+---
+
+### ✅ **Day 5: Messaging + Availability Calendar**
+
+**Goals:**
+
+* Enable communication and schedule visibility.
+
+**Tasks:**
+
+* Simple in-app chat (text only, Firebase or backend socket).
+* Worker sets weekly availability.
+* Clients see available slots before booking.
+* Fallback to WhatsApp deep link for MVP chat (optional).
+
+---
+
+### ✅ **Day 6: Ratings, Multilingual UI, and Notifications**
+
+**Goals:**
+
+* Add job feedback and basic notification system.
+* Provide English/Swahili toggle.
+
+**Tasks:**
+
+* Rating form and API (1–5 stars + comment).
+* Multilingual text file (i18n) for UI labels.
+* Notification system (new message, booking update).
+* Optional: WhatsApp/SMS fallback logic.
+
+---
+
+### ✅ **Day 7: Testing + Deployment**
+
+**Goals:**
+
+* Perform end-to-end test and deploy.
+
+**Tasks:**
+
+* Manual testing of core flows (register → post → search → book → chat → rate).
+* Fix bugs and edge cases (e.g., overlapping bookings).
+* Deploy backend (e.g., on Render, DigitalOcean, or AWS Lightsail).
+* Deploy frontend as PWA or static site.
+* Create admin access to view user/job data.
+
+---
+
+## 🚀 MVP Core Features Delivered by Day 7:
+
+* ✅ User Registration + Role System
+* ✅ Worker Profiles + Services
+* ✅ Job Posting + Booking Flow
+* ✅ Geolocation-based Worker Search
+* ✅ Basic Messaging
+* ✅ Ratings & Reviews
+* ✅ Multilingual Support
+* ✅ Mobile-First UI (React or Flutter)
+* ✅ Live Deployment
+
+---
+
+NAVIGATION
+---
+
+## 🔀 Suggested Navigational Shortcuts & Routes
+
+### 🏠 1. **Home Page** (`/`)
+
+* Quick intro to the platform
+* CTA: "Find Workers", "Post a Job"
+
+---
+
+### 👤 2. **User Authentication**
+
+* `/login` — Sign In (Workers & Clients)
+* `/register` — Create Account
+* `/forgot-password` — Password Reset
+
+---
+
+### 🔍 3. **Search and Discovery**
+
+* `/find-workers` — Map/List view of nearby service providers
+
+  * Filters: location, profession, availability, price, rating
+* `/job-board` — Public job listings (for workers)
+
+---
+
+### 📄 4. **Worker Profiles**
+
+* `/profile/:workerId` — Public worker profile with:
+
+  * Skills, ratings, languages, availability, "Hire" button
+
+---
+
+### 🧑‍💼 5. **Client Job Postings**
+
+* `/post-job` — Form to create a new job post
+* `/my-jobs` — List of posted jobs
+* `/job/:jobId` — Job detail view (status, applicants, messages)
+
+---
+
+### 📅 6. **Bookings & Calendar**
+
+* `/my-bookings` — Active, upcoming, and past jobs
+* `/calendar` — Worker availability management
+* `/booking/:bookingId` — Booking details and status updates
+
+---
+
+### 💬 7. **Messages & Notifications**
+
+* `/messages` — Chat inbox or conversation list
+* `/notifications` — Updates for bookings, reviews, etc.
+
+---
+
+### 🌐 8. **Settings & Account**
+
+* `/settings/profile` — Edit profile, language, phone
+* `/settings/security` — Password, 2FA (optional)
+* `/settings/availability` — Weekly work hours
+
+---
+
+### 🧾 9. **Ratings & Reviews**
+
+* `/reviews` — View received reviews
+* `/rate/:jobId` — Leave review after job
+
+---
+
+### 🛟 10. **Support & Help**
+
+* `/help` — FAQ, contact support
+* `/report` — Report abuse or dispute resolution
+
+---
+
+## 🎯 Keyboard Shortcuts (for web/PWA)
+
+| Shortcut  | Action                |
+| --------- | --------------------- |
+| `Alt + H` | Go to Home            |
+| `Alt + F` | Open Find Workers     |
+| `Alt + J` | Post a Job            |
+| `Alt + M` | Open Messages         |
+| `Alt + C` | Calendar/Availability |
+| `Alt + B` | View Bookings         |
+| `Alt + S` | Open Settings         |
+
+> On mobile, these would appear as **bottom navigation tabs** or a collapsible side menu.
+
+---
+
+
+TOP NAVIGATION
+
+---
+
+## ✅ Top Navigation Elements (Header / Topbar)
+
+### 1. **Logo + App Name**
+
+* **Left-aligned** or **centered**.
+* Clickable to go to the **Home Page** (`/`).
+
+```plaintext
+[Kazi-kitaa Logo]  Kazi-kitaa
+```
+
+---
+
+### 2. **Primary Nav Links**
+
+#### For Unauthenticated Users:
+
+| Label        | Route           | Purpose                      |
+| ------------ | --------------- | ---------------------------- |
+| Home         | `/`             | Intro page                   |
+| Find Workers | `/find-workers` | Public worker directory      |
+| Post a Job   | `/post-job`     | Leads to sign-up or job form |
+| Sign In      | `/login`        | User login                   |
+| Register     | `/register`     | Account creation             |
+
+---
+
+#### For Logged-in Clients:
+
+| Label        | Route           | Purpose                      |
+| ------------ | --------------- | ---------------------------- |
+| Dashboard    | `/dashboard`    | Overview of bookings, jobs   |
+| My Jobs      | `/my-jobs`      | Posted job listings          |
+| Find Workers | `/find-workers` | Search for service providers |
+| Messages     | `/messages`     | Chat with workers            |
+| Profile      | `/settings`     | Account settings, logout     |
+
+---
+
+#### For Logged-in Workers:
+
+| Label       | Route        | Purpose                        |
+| ----------- | ------------ | ------------------------------ |
+| Dashboard   | `/dashboard` | Overview of bookings, calendar |
+| Job Board   | `/job-board` | View open jobs                 |
+| My Calendar | `/calendar`  | Set or update availability     |
+| Messages    | `/messages`  | Chat with clients              |
+| Profile     | `/settings`  | Edit profile, logout           |
+
+---
+
+### 3. **Language Switcher**
+
+* Toggle between **Swahili 🇰🇪** and **English 🇬🇧**
+* e.g., Dropdown or globe icon: 🌍
+
+---
+
+### 4. **Notifications Bell 🔔**
+
+* Route: `/notifications`
+* New job requests, confirmations, reviews
+
+---
+
+### 5. **Avatar Dropdown Menu**
+
+* Visible after login
+* Contains:
+
+  * `My Profile`
+  * `Settings`
+  * `Support / Help`
+  * `Logout`
+
+---
+
+## 🔁 Mobile Design Suggestion
+
+* Use a **hamburger menu** for top nav on small screens
+* Move core actions like `Find Workers`, `Post a Job`, and `Messages` to a **bottom tab bar** for easier access
+
+---
+
+
+
+
