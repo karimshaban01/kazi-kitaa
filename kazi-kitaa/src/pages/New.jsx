@@ -15,8 +15,12 @@ export default function NewScreen(){
         })
     }
 
-    const handleData = ()=>{
-        alert("sending data ...")
+    const handleData = (event)=>{
+        event.preventDefault();
+        
+
+        navigate('/jobs');
+        
     }
 
     return (
