@@ -1,9 +1,26 @@
-console.log("Server is running on port 3000");
-const express = require('express');
-const cors = require('cors');
-const app = express();
-const port = 3000;
+const { Client } = require('pg');
 
-app.use(cors());
-app.use(express.json());
+// PostgreSQL connection config
+const client = new Client({
+  host: 'localhost',     // or your server IP
+  port: 5432,            // default PostgreSQL port
+  user: 'karim', // e.g., 'postgres'
+  password: 'Karim@01',
+  database: 'kazi_kitaa' // your database name,
+});
 
+// Connect to PostgreSQL
+client.connect()
+  .then(() => console.log("✅ Connected to PostgreSQL"))
+  .catch(err => console.error("❌ Connection error", err.stack));
+
+/* // Example query
+client.query('SELECT NOW()', (err, res) => {
+  if (err) {
+    console.error('❌ Query error:', err.stack);
+  } else {
+    console.log('📅 Server time:', res.rows[0]);
+  }
+  client.end(); // close connection
+});
+ */
