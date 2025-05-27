@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState } from "react"
 import '../App.css'
 import { useNavigate } from 'react-router-dom'
 import HeaderNav from "./Header"
+import '../styles/new.css'
 import { 
   FaBriefcase, 
   FaMapMarkerAlt, 
@@ -24,6 +25,8 @@ export default function NewScreen() {
     budget: '',
     duration: ''
   })
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState(null)
 
   const services = [
     { id: 1, name_en: 'IT & Software', name_sw: 'Teknolojia' },
@@ -54,9 +57,45 @@ export default function NewScreen() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    // Here you would normally make an API call to create the job
-    console.log(jobData)
-    navigate('/jobs')
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        navigate('/login')
+        return
+      }
+
+      const response = await fetch('http://localhost:2000/api/jobs/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          service_id: parseInt(jobData.service_id),
+          description: jobData.description,
+          location: `POINT(${jobData.location.longitude} ${jobData.location.latitude})`,
+          scheduled_at: new Date(jobData.scheduled_at).toISOString(),
+          budget: parseFloat(jobData.budget),
+          duration: parseInt(jobData.duration)
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        navigate('/jobs')
+      } else {
+        setError(data.message || 'Failed to create job')
+      }
+    } catch (error) {
+      setError('Network error. Please try again.')
+      console.error('Error creating job:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -88,6 +127,11 @@ export default function NewScreen() {
           {/* Main Form */}
           <div className="feed-section">
             <div className="post-box">
+              {error && (
+                <div className="error-message">
+                  {error}
+                </div>
+              )}
               <form onSubmit={handleSubmit} className="new-job-form">
                 <div className="form-group">
                   <FaBriefcase />
@@ -184,8 +228,13 @@ export default function NewScreen() {
                   />
                 </div>
 
-                <button type="submit" className="submit-btn">
-                  <FaBriefcase /> Chapisha Kazi
+                <button 
+                  type="submit" 
+                  className="submit-btn" 
+                  disabled={isLoading}
+                >
+                  <FaBriefcase /> 
+                  {isLoading ? 'Inatuma...' : 'Chapisha Kazi'}
                 </button>
               </form>
             </div>

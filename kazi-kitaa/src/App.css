@@ -581,15 +581,12 @@ textarea.form-input {
 
 /* Profile Page Specific Styles */
 .verified-badge {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  background: var(--vscode-accent);
-  color: white;
-  border-radius: 12px;
-  font-size: 12px;
-  margin-top: 8px;
+  gap: 0.5rem;
+  color: #28a745;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
 }
 
 .available {
@@ -1591,10 +1588,12 @@ textarea.form-input {
 
 /* Header Styles */
 .header {
+  position: absolute;
   background: var(--vscode-card-bg);
   border-bottom: 1px solid var(--vscode-border);
   position: sticky;
   top: 0;
+  left: 0;
   z-index: 1000;
 }
 
@@ -1803,21 +1802,70 @@ textarea.form-input {
   background: var(--vscode-hover);
 }
 
-/* Responsive Breakpoints */
-@media (max-width: 768px) {
-  .desktop-only {
-    display: none;
-  }
+/* Application Form Styles */
+.application-form {
+    margin-top: 2rem;
+}
 
-  .mobile-only {
-    display: flex;
-  }
+.form-group {
+    margin-bottom: 1.5rem;
+}
 
-  .header-content {
-    padding: 0 16px;
-  }
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
 
-  .logo-text {
-    display: none;
-  }
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #0066cc;
+    box-shadow: 0 0 0 2px rgba(0,102,204,0.2);
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.error-message {
+  text-align: center;
+  padding: 1rem;
+  margin: 1rem;
+  background-color: #fee;
+  color: #c00;
+  border-radius: 4px;
+}
+
+.available {
+  color: #28a745;
+}
+
+.unavailable {
+  color: #dc3545;
+}
+
+.verified-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #28a745;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
 }

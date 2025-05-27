@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import HeaderNav from './Header'
 import {
   FaBriefcase,
@@ -13,37 +14,62 @@ import {
 } from 'react-icons/fa'
 
 export default function JobDescriptionScreen() {
-  const { id } = useParams()
+  const { jobId } = useParams()
   const navigate = useNavigate()
-  
-  const [job, setJob] = useState({
-    title: 'Software Developer',
-    description: 'Detailed job description here...',
-    requirements: [
-      'Bachelor degree in Computer Science',
-      '3+ years experience',
-      'Strong problem-solving skills'
-    ],
-    budget: 50000,
-    duration: '3 hours',
-    location: {
-      latitude: -6.776012,
-      longitude: 39.178326,
-      address: 'Dar es Salaam, Tanzania'
-    },
-    client: {
-      name: 'John Doe',
-      rating: 4.5,
-      jobs_posted: 12
-    },
-    posted_at: new Date().toISOString(),
-    applications: 5
-  })
-
+  const [job, setJob] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [isSaved, setIsSaved] = useState(false)
 
+  useEffect(() => {
+    const fetchJobDetails = async () => {
+      try {
+        setIsLoading(true)
+        const { data } = await axios.get('http://172.17.0.8:2000' + `/api/jobs/${jobId}`)
+        // Access the job property from the response and provide default values
+        setJob({
+          ...data.job,
+          location: data.job?.location || { address: 'Location not specified', coordinates: [] },
+          client: data.job?.client || { name: 'Unknown', rating: 0, jobs_posted: 0 },
+          requirements: data.job?.requirements || [],
+          applications: data.job?.applications || 0
+        })
+      } catch (err) {
+        setError(err.response?.data?.message || 'Error loading job details')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchJobDetails()
+  }, [jobId])
+
   const handleApply = () => {
-    navigate(`/apply/${id}`)
+    navigate(`/jobs/${jobId}/apply`)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="linkedin-layout">
+        <HeaderNav />
+        <div className="container">
+          <div className="loading">Loading...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !job) {
+    return (
+      <div className="linkedin-layout">
+        <HeaderNav />
+        <div className="container">
+          <div className="error-message">
+            {error || 'Unable to load job details'}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -55,7 +81,7 @@ export default function JobDescriptionScreen() {
           <div className="feed-section">
             <div className="post-box job-header-card">
               <div className="job-title-section">
-                <h1>{job.title}</h1>
+                <h1>{job?.title || 'Job Title'}</h1>
                 <button 
                   className={`save-btn ${isSaved ? 'saved' : ''}`}
                   onClick={() => setIsSaved(!isSaved)}
@@ -65,10 +91,12 @@ export default function JobDescriptionScreen() {
               </div>
 
               <div className="job-quick-info">
-                <span><FaMapMarkerAlt /> {job.location.address}</span>
-                <span><FaMoneyBillWave /> TZS {job.budget}</span>
-                <span><FaClock /> {job.duration}</span>
-                <span><FaCalendarAlt /> Posted {new Date(job.posted_at).toLocaleDateString()}</span>
+                <span><FaMapMarkerAlt /> {job?.location?.address || 'Location not specified'}</span>
+                <span><FaMoneyBillWave /> TZS {job?.budget || 0}</span>
+                <span><FaClock /> {job?.duration || 'Not specified'}</span>
+                <span>
+                  <FaCalendarAlt /> Posted {job?.created_at ? new Date(job.created_at).toLocaleDateString() : 'Recently'}
+                </span>
               </div>
 
               <button className="apply-btn main-action" onClick={handleApply}>
@@ -78,11 +106,11 @@ export default function JobDescriptionScreen() {
 
             <div className="post-box">
               <h2>Job Description</h2>
-              <p>{job.description}</p>
+              <p>{job?.description || 'No description provided'}</p>
 
               <h2>Requirements</h2>
               <ul className="requirements-list">
-                {job.requirements.map((req, index) => (
+                {(job?.requirements || []).map((req, index) => (
                   <li key={index}>{req}</li>
                 ))}
               </ul>
@@ -97,20 +125,20 @@ export default function JobDescriptionScreen() {
                 <div className="client-header">
                   <FaUser className="client-avatar" />
                   <div>
-                    <h4>{job.client.name}</h4>
+                    <h4>{job?.client?.name || 'Anonymous'}</h4>
                     <div className="client-rating">
-                      <FaStar /> {job.client.rating}
+                      <FaStar /> {job?.client?.rating || 0}
                     </div>
                   </div>
                 </div>
                 <div className="client-stats">
                   <div className="stat">
                     <span>Jobs Posted</span>
-                    <strong>{job.client.jobs_posted}</strong>
+                    <strong>{job?.client?.jobs_posted || 0}</strong>
                   </div>
                   <div className="stat">
                     <span>Applications</span>
-                    <strong>{job.applications}</strong>
+                    <strong>{job?.applications || 0}</strong>
                   </div>
                 </div>
               </div>
@@ -119,11 +147,10 @@ export default function JobDescriptionScreen() {
             <div className="post-box">
               <h3>Job Location</h3>
               <div className="location-preview">
-                {/* Add map preview here */}
                 <div className="map-placeholder">
                   Map Preview
                 </div>
-                <p>{job.location.address}</p>
+                <p>{job?.location?.address || 'Location not specified'}</p>
               </div>
             </div>
           </div>

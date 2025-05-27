@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import HeaderNav from './Header'
+import '../styles/login.css'
 import {
   FaEnvelope,
   FaLock,
@@ -14,6 +15,8 @@ export default function LoginScreen() {
     email: '',
     password: ''
   })
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState(null)
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -25,8 +28,33 @@ export default function LoginScreen() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    // API call to login user
-    navigate('/home')
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch('http://localhost:2000/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Store user data in localStorage or state management
+        localStorage.setItem('user', JSON.stringify(data.user))
+        localStorage.setItem('token', data.token)
+        navigate('/')
+      } else {
+        setError(data.message || 'Login failed')
+      }
+    } catch (err) {
+      setError('Connection error. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -34,12 +62,17 @@ export default function LoginScreen() {
       <HeaderNav />
       <div className="container">
         <div className="main-content login-layout">
-          {/* Main Form */}
           <div className="login-section">
             <div className="post-box">
               <form onSubmit={handleSubmit} className="login-form">
                 <h2>Ingia Kwenye Akaunti</h2>
                 
+                {error && (
+                  <div className="error-message">
+                    {error}
+                  </div>
+                )}
+
                 <div className="form-group">
                   <FaEnvelope />
                   <input
@@ -66,8 +99,12 @@ export default function LoginScreen() {
                   />
                 </div>
 
-                <button type="submit" className="submit-btn">
-                  Ingia
+                <button 
+                  type="submit" 
+                  className="submit-btn"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Inaingia...' : 'Ingia'}
                 </button>
 
                 <div className="divider">AU</div>

@@ -40,7 +40,7 @@ export default function HeaderNav() {
           {/* Logo Section */}
           <div className="header-left">
             <Link to="/" className="logo">
-              <img src="/logo.png" alt="Kazi Kitaa" className="logo-img" />
+              {/* <img src="/logo.png" alt="Kazi Kitaa" className="logo-img" /> */}
               <span className="logo-text">Kazi Kitaa</span>
             </Link>
 
@@ -54,7 +54,7 @@ export default function HeaderNav() {
                   <Link to="/find-workers" className={`nav-link ${location.pathname === '/find-workers' ? 'active' : ''}`}>
                     <FaSearch /> {language === 'sw' ? 'Tafuta Wafanyakazi' : 'Find Workers'}
                   </Link>
-                  <Link to="/post-job" className={`nav-link ${location.pathname === '/post-job' ? 'active' : ''}`}>
+                  <Link to="/new" className={`nav-link ${location.pathname === '/post-job' ? 'active' : ''}`}>
                     <FaPlus /> {language === 'sw' ? 'Weka Kazi' : 'Post Job'}
                   </Link>
                 </>

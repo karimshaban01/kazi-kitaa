@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
+import axios from 'axios'
 import HeaderNav from './Header'
 import {
   FaUser,
@@ -15,7 +16,10 @@ import {
 import '../App.css';
 
 export default function ProfileScreen() {
+  const { userId } = useParams()
   const navigate = useNavigate()
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [profile, setProfile] = useState({
     user_id: '',
     full_name: '',
@@ -37,6 +41,52 @@ export default function ProfileScreen() {
   })
 
   const [isEditing, setIsEditing] = useState(false)
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        setIsLoading(true)
+        const { data } = await axios.get(`http://localhost:2000/api/users/${userId}`, {
+          withCredentials: true,
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (data.success && data.user) {
+          // Transform the API response to match our profile structure
+          setProfile({
+            user_id: data.user.id,
+            full_name: data.user.full_name,
+            email: data.user.email,
+            phone: data.user.phone_number,
+            role: data.user.role,
+            location: data.user.worker_profile?.location?.coordinates ? {
+              latitude: data.user.worker_profile.location.coordinates[1],
+              longitude: data.user.worker_profile.location.coordinates[0]
+            } : { latitude: '', longitude: '' },
+            available: data.user.worker_profile?.available || false,
+            verified: data.user.is_verified,
+            rating: data.user.rating || 0,
+            services: data.user.worker_profile?.services || [],
+            skills: data.user.worker_profile?.skills || [],
+            experience: [], // Add if your API provides this
+            education: [], // Add if your API provides this
+            certifications: [] // Add if your API provides this
+          })
+        }
+      } catch (err) {
+        setError(err.response?.data?.message || 'Error loading profile')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (userId) {
+      fetchUserProfile()
+    }
+  }, [userId])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -60,6 +110,28 @@ export default function ProfileScreen() {
     e.preventDefault()
     // API call to update profile
     setIsEditing(false)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="linkedin-layout">
+        <HeaderNav />
+        <div className="container">
+          <div className="loading">Loading...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="linkedin-layout">
+        <HeaderNav />
+        <div className="container">
+          <div className="error-message">{error}</div>
+        </div>
+      </div>
+    )
   }
 
   return (

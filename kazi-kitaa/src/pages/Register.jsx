@@ -30,6 +30,7 @@ export default function RegisterScreen() {
   })
 
   const [step, setStep] = useState(1)
+  const [isLoading, setIsLoading] = useState(false)
 
   // Update the handleChange function to properly handle skills array
   const handleChange = (e) => {
@@ -64,14 +65,44 @@ export default function RegisterScreen() {
     }
   }
 
+  // Update the handleSubmit function
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (step < 3) {
       setStep(step + 1)
       return
     }
-    // API call to register user
-    navigate('/login')
+
+    setIsLoading(true)
+
+    fetch('http://localhost:2000/api/register/',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      }
+    )
+    .then(response => response.json())
+    .then(data => {
+      setIsLoading(false)
+      if (data.success) {
+        console.log('Registration successful:', data.message);
+        // Add a small delay before navigation (optional)
+        setTimeout(() => {
+          navigate('/login');
+        }, 1000);
+      } else {
+        console.error('Registration failed:', data.message);
+        // You might want to show an error message to the user here
+      }
+    })
+    .catch(error => {
+      setIsLoading(false)
+      console.error('Registration error:', error);
+      // You might want to show an error message to the user here
+    });
   }
 
   return (
@@ -254,8 +285,8 @@ export default function RegisterScreen() {
                   </div>
                 )}
 
-                <button type="submit" className="submit-btn">
-                  <FaCheck /> Kamilisha usajili
+                <button type="submit" className="submit-btn" disabled={isLoading}>
+                  <FaCheck /> {isLoading ? 'Inaendelea...' : 'Kamilisha usajili'}
                 </button>
               </form>
             </div>

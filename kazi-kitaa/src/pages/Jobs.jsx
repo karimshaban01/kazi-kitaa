@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import axios from 'axios'
 import HeaderNav from './Header'
 import { 
   FaBriefcase, 
@@ -21,6 +22,37 @@ export default function JobsScreen() {
   })
   
   const [jobs, setJobs] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setLoading(true)
+        const response = await axios.get('http://172.17.0.8:2000/api/jobs/list')
+        setJobs(response.data)
+        console.log('Fetched jobs:', response.data)
+        setError(null)
+      } catch (err) {
+        setError('Failed to fetch jobs')
+        console.error('Error fetching jobs:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchJobs()
+  }, [])
+
+  // Add this helper function at the top of your component
+  const formatLocation = (location) => {
+    if (!location) return 'Location Not Specified';
+    if (typeof location === 'string') return location;
+    if (typeof location === 'object' && location.coordinates) {
+      return `${location.coordinates[1]}, ${location.coordinates[0]}`;
+    }
+    return 'Location Not Specified';
+  };
 
   return (
     <div className="linkedin-layout">
@@ -102,25 +134,45 @@ export default function JobsScreen() {
             </div>
 
             <div className="jobs-list">
-              {jobs.map(job => (
-                <div key={job.id} className="feed-card job-card" 
-                     onClick={() => navigate(`/jobs/${job.id}`)}>
+              {loading && <div className="loading">Loading jobs...</div>}
+              {error && <div className="error">{error}</div>}
+              {!loading && !error && jobs.length === 0 && (
+                <div className="no-jobs">No jobs found</div>
+              )}
+              {!loading && !error && jobs.map(job => (
+                <div key={job.id} className="feed-card job-card">
                   <div className="job-header">
                     <FaBriefcase className="job-icon" />
                     <div>
-                      <h3>{job.title}</h3>
-                      <p className="company">{job.company}</p>
+                      <h3>{job.service.name_en || job.title || 'No Title'}</h3>
+                      <p className="company">{job.client.name || job.company || 'Company Not Listed'}</p>
                     </div>
                   </div>
 
-                  <p className="job-description">{job.description}</p>
+                  <p className="job-description">{job.description || 'No description available'}</p>
 
                   <div className="job-details">
-                    <span><FaMapMarkerAlt /> {job.location}</span>
-                    <span><FaMoneyBillWave /> {job.salary} TZS</span>
+                    <span><FaMapMarkerAlt /> {formatLocation(job.location)}</span>
+                    <span><FaMoneyBillWave /> {job.salary || 'Salary Not Specified'} TZS</span>
                   </div>
 
-                  <button className="apply-btn">View Details</button>
+                  <div className="job-actions">
+                    <button 
+                      className="action-btn view-btn"
+                      onClick={() => navigate(`/jobs/${job.id}`)}
+                    >
+                      View Details
+                    </button>
+                    <button 
+                      className="action-btn apply-btn"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigate(`/jobs/${job.id}/apply`)
+                      }}
+                    >
+                      Apply Now
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

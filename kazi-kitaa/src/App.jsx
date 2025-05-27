@@ -52,12 +52,12 @@ function App() {
             <Route path="/regions" element={<RegionScreen></RegionScreen>} />
             <Route path="/jobs" element={<JobScreen></JobScreen>} />
             <Route path="/new" element={<NewScreen></NewScreen>} />
-            <Route path="/profile" element={<ProfileScreen></ProfileScreen>}></Route>
+            <Route path="/profile/:userId" element={<ProfileScreen></ProfileScreen>}></Route>
             <Route path="/bids" element={<BidsScreen></BidsScreen>}></Route>
             <Route path="/payments" element={<PaymentScreen></PaymentScreen>}></Route>
             <Route path="/refund" element={<RefundScreen></RefundScreen>}></Route>
             <Route path="/reviews" element={<ReviewScreen></ReviewScreen>}></Route>
-            <Route path="/apply" element={<ApplyScreen></ApplyScreen>}></Route>
+            <Route path="/jobs/:jobId/apply" element={<ApplyScreen></ApplyScreen>}></Route>
             <Route path="/submit" element={<SubmissionScreen></SubmissionScreen>}></Route>
             <Route path="/request-pay" element={<RequestPaymentScreen></RequestPaymentScreen>}></Route>
             <Route path='/register' element={<RegisterScreen/>}></Route>
@@ -69,7 +69,7 @@ function App() {
             <Route path='/rate' element={<RatingScreen/>}></Route>
             <Route path='/admin' element={<AdminDashboard />}></Route>
             <Route path="/offline" element={<OfflineScreen />}></Route>
-            <Route path="/job" element={<JobDescriptionScreen />}></Route>
+            <Route path="/jobs/:jobId" element={<JobDescriptionScreen />}></Route>
           </Routes>
       
     </Router>
