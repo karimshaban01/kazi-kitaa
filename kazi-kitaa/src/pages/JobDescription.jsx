@@ -12,6 +12,22 @@ import {
   FaStar,
   FaBookmark
 } from 'react-icons/fa'
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
+import L from 'leaflet'
+
+// Fix Leaflet marker icon issue
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+})
+
+const IAA_LOCATION = {
+  coordinates: [36.6917, -3.3640], // [longitude, latitude] for IAA
+  address: 'Institute of Accountancy Arusha, Njiro Hill, Arusha'
+};
 
 export default function JobDescriptionScreen() {
   const { jobId } = useParams()
@@ -147,10 +163,32 @@ export default function JobDescriptionScreen() {
             <div className="post-box">
               <h3>Job Location</h3>
               <div className="location-preview">
-                <div className="map-placeholder">
-                  Map Preview
-                </div>
-                <p>{job?.location?.address || 'Location not specified'}</p>
+                <MapContainer
+                  center={
+                    job?.location?.coordinates?.length === 2 
+                      ? [IAA_LOCATION.coordinates[1], IAA_LOCATION.coordinates[0]]
+                      : [IAA_LOCATION.coordinates[1], IAA_LOCATION.coordinates[0]]
+                  }
+                  zoom={15}
+                  style={{ height: '200px', width: '100%', borderRadius: '8px' }}
+                >
+                  <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  />
+                  <Marker 
+                    position={
+                      job?.location?.coordinates?.length === 2
+                        ? [IAA_LOCATION.coordinates[1], IAA_LOCATION.coordinates[0]]
+                        : [IAA_LOCATION.coordinates[1], IAA_LOCATION.coordinates[0]]
+                    }
+                  >
+                    <Popup>
+                      {IAA_LOCATION.address || IAA_LOCATION.address}
+                    </Popup>
+                  </Marker>
+                </MapContainer>
+                <p>{IAA_LOCATION.address || IAA_LOCATION.address}</p>
               </div>
             </div>
           </div>

@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import '../App.css'
 import HeaderNav from './Header'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import { 
   FaBriefcase, 
   FaUser, 
@@ -15,17 +16,42 @@ import {
 
 function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [jobs, setJobs] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [user, setUser] = useState(null)
   const navigate = useNavigate()
+
+  // Fetch jobs when component mounts
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const { data } = await axios.get('http://localhost:2000/api/jobs/list')
+        setJobs(data)
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchJobs()
+  }, [])
+
+  // Group jobs by service category
+  const jobsByCategory = jobs.reduce((acc, job) => {
+    const category = job.service.name_en
+    if (!acc[category]) {
+      acc[category] = []
+    }
+    acc[category].push(job)
+    return acc
+  }, {})
 
   const handleSearch = (e) => {
     e.preventDefault()
     navigate('/jobs', { state: { query: searchQuery } })
   }
-
-  const categories = [
-    'IT & Software', 'Sales & Marketing', 'Education',
-    'Healthcare', 'Construction', 'Hospitality'
-  ]
 
   return (
     <div className="linkedin-layout">
@@ -49,26 +75,17 @@ function HomeScreen() {
               <div className="profile-stats">
                 <div className="stat">
                   <span>Watazamaji wa wasifu</span>
-                  <strong>28</strong>
+                  <strong>{user?.profile_views || 0}</strong>
                 </div>
                 <div className="stat">
-                  <span>Muunganisho</span>
-                  <strong>150</strong>
+                  <span>Kazi Zilizokamilika</span>
+                  <strong>{user?.client_stats?.completed_jobs || 0}</strong>
                 </div>
                 <div className="stat">
-                  <span>Watafutaji wa kazi</span>
-                  <strong>45</strong>
+                  <span>Kazi Zinazoendelea</span>
+                  <strong>{user?.client_stats?.active_jobs || 0}</strong>
                 </div>
               </div>
-            </div>
-            
-            <div className="quick-links-card">
-              <h4>Viungo vyako</h4>
-              <ul>
-                <li><FaBookmark /> Kazi zilizohifadhiwa</li>
-                <li><FaTrophy /> Ujuzi na Uthibitisho</li>
-                <li><FaChartLine /> Takwimu za Maombi</li>
-              </ul>
             </div>
           </div>
 
@@ -77,39 +94,48 @@ function HomeScreen() {
             <div className="post-box">
               <div className="post-input">
                 <FaUser className="avatar" />
-                <input 
-                  type="text" 
-                  placeholder="Tafuta kazi, wafanyakazi, au kampuni..." 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <div className="post-actions">
-                <button><FaBriefcase /> Kazi</button>
-                <button><FaNetworkWired /> Mtandao</button>
-                <button><FaBuilding /> Kampuni</button>
+                <form onSubmit={handleSearch}>
+                  <input 
+                    type="text" 
+                    placeholder="Tafuta kazi, wafanyakazi, au kampuni..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </form>
               </div>
             </div>
 
-            <div className="feed-items">
-              {categories.map((category, index) => (
-                <div key={index} className="feed-card">
-                  <div className="feed-header">
-                    <FaBuilding className="company-icon" />
-                    <div>
-                      <h3>{category}</h3>
-                      <p>Nafasi mpya za kazi</p>
+            {loading ? (
+              <div className="loading">Inapakia...</div>
+            ) : error ? (
+              <div className="error-message">{error}</div>
+            ) : (
+              <div className="feed-items">
+                {Object.entries(jobsByCategory).map(([category, categoryJobs]) => (
+                  <div key={category} className="feed-card">
+                    <div className="feed-header">
+                      <FaBuilding className="company-icon" />
+                      <div>
+                        <h3>{category}</h3>
+                        <p>Nafasi {categoryJobs.length} mpya za kazi</p>
+                      </div>
+                    </div>
+                    <div className="feed-content">
+                      <p>Kazi mpya katika {category}</p>
+                      {categoryJobs.slice(0, 3).map(job => (
+                        <div key={job.id} className="job-preview">
+                          <h4>{job.description.substring(0, 50)}...</h4>
+                          <p>TZS {job.budget} • {job.duration}</p>
+                        </div>
+                      ))}
+                      <button onClick={() => navigate('/jobs', { state: { jobType: category } })}>
+                        Tazama Zote
+                      </button>
                     </div>
                   </div>
-                  <div className="feed-content">
-                    <p>Tunatafuta wafanyakazi wenye ujuzi katika {category}</p>
-                    <button onClick={() => navigate('/jobs', { state: { jobType: category } })}>
-                      Tuma Maombi
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right Sidebar */}
@@ -117,38 +143,19 @@ function HomeScreen() {
             <div className="news-card">
               <h3>Habari za Ajira</h3>
               <ul className="news-list">
-                <li>
-                  <span className="news-bullet">•</span>
-                  <div>
-                    <p className="news-title">Fursa mpya za ajira</p>
-                    <span className="news-time">Saa 2 zilizopita • Watazamaji 234</span>
-                  </div>
-                </li>
-                <li>
-                  <span className="news-bullet">•</span>
-                  <div>
-                    <p className="news-title">Mafunzo ya kikazi</p>
-                    <span className="news-time">Leo • Watazamaji 567</span>
-                  </div>
-                </li>
-                <li>
-                  <span className="news-bullet">•</span>
-                  <div>
-                    <p className="news-title">Ushauri wa taaluma</p>
-                    <span className="news-time">Jana • Watazamaji 890</span>
-                  </div>
-                </li>
+                {jobs.slice(0, 3).map(job => (
+                  <li key={job.id}>
+                    <span className="news-bullet">•</span>
+                    <div>
+                      <p className="news-title">{job.description.substring(0, 30)}...</p>
+                      <span className="news-time">
+                        {new Date(job.created_at).toLocaleDateString()} • 
+                        Watazamaji {job.views_count || 0}
+                      </span>
+                    </div>
+                  </li>
+                ))}
               </ul>
-            </div>
-            
-            <div className="trending-topics-card">
-              <h3>Mada Zinazovuma</h3>
-              <div className="topic-tags">
-                <span>#AjiraKenya</span>
-                <span>#TeknolojiaKE</span>
-                <span>#BiasharaNyumbani</span>
-                <span>#KaziMpya2025</span>
-              </div>
             </div>
           </div>
         </div>
