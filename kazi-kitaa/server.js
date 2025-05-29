@@ -8,7 +8,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: '*',
+  origin: ['http://localhost:5173', 'http://172.17.0.8:5173', '*'], // Adjust this to your frontend URL
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -591,6 +591,150 @@ app.get('/api/users/:userId', /*verifyToken,*/ async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching user details',
+      error: error.message
+    });
+  }
+});
+
+// Get all users endpoint
+app.get('/api/users', async (req, res) => {
+  try {
+    const usersQuery = `
+      SELECT 
+        id,
+        full_name,
+        email,
+        phone_number,
+        role,
+        is_verified,
+        created_at,
+        last_active
+      FROM users
+      ORDER BY created_at DESC`;
+
+    const result = await client.query(usersQuery);
+
+    const users = result.rows.map(user => ({
+      id: user.id,
+      full_name: user.full_name,
+      email: user.email,
+      phone_number: user.phone_number,
+      role: user.role,
+      is_verified: user.is_verified,
+      created_at: user.created_at,
+      last_active: user.last_active
+    }));
+
+    res.json({
+      success: true,
+      count: users.length,
+      users
+    });
+
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching users',
+      error: error.message
+    });
+  }
+});
+
+app.post('/api/jobs/:jobId/apply', /* verifyToken */ async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const { cover_letter, worker_id, portfolio_url, resume_url } = req.body;
+
+    // Validate input
+    if (!cover_letter || !worker_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Description and worker ID are required'
+      });
+    }
+
+    console.log('Received application data:', req.body);
+    // Insert application into database
+    const applicationQuery = `
+      INSERT INTO job_applications (
+        job_id,
+        applicant_id,
+        cover_letter,
+        resume_url,
+        portfolio_url,
+        status,
+        submitted_at
+      )
+      VALUES ($1, $2, $3, $4, $5, 'pending', CURRENT_TIMESTAMP)
+      RETURNING id, job_id, applicant_id, cover_letter, resume_url, portfolio_url, status`;
+
+    const result = await client.query(applicationQuery, [jobId, worker_id, cover_letter, resume_url || '', portfolio_url || '']);
+
+    res.status(201).json({
+      success: true,
+      message: 'Application submitted successfully',
+      application: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Error submitting application:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error submitting application',
+      error: error.message
+    });
+  }
+})
+
+//All applications for a job
+app.get('/api/jobs/:jobId/applications', async (req, res) => {
+  try {
+    const { jobId } = req.params;
+
+    const applicationsQuery = `
+      SELECT 
+        ja.id,
+        ja.cover_letter,
+        ja.resume_url,
+        ja.portfolio_url,
+        ja.status,
+        ja.submitted_at,
+        u.id as applicant_id,
+        u.full_name as applicant_name,
+        u.email as applicant_email
+      FROM job_applications ja
+      JOIN users u ON ja.applicant_id = u.id
+      WHERE ja.job_id = $1
+      ORDER BY ja.submitted_at DESC`;
+
+    const result = await client.query(applicationsQuery, [jobId]);
+
+    const applications = result.rows.map(app => ({
+      id: app.id,
+      cover_letter: app.cover_letter,
+      resume_url: app.resume_url,
+      portfolio_url: app.portfolio_url,
+      status: app.status,
+      submitted_at: app.submitted_at,
+      applicant: {
+        id: app.applicant_id,
+        name: app.applicant_name,
+        email: app.applicant_email
+      }
+    }));
+
+    res.json({
+      success: true,
+      count: applications.length,
+      applications
+    });
+
+  } catch (error) {
+    console.error('Error fetching applications:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching job applications',
       error: error.message
     });
   }

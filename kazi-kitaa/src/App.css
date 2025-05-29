@@ -1705,6 +1705,7 @@ textarea.form-input {
 
 /* Header Specific Styles */
 .header {
+  max-width: 97%;
   background: var(--vscode-card-bg);
   border-bottom: 1px solid var(--vscode-border);
   position: sticky;

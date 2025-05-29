@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import HeaderNav from './Header'
+import './JobDescription.css'
+import '../App.css'
 import {
   FaBriefcase,
   FaMapMarkerAlt,
@@ -41,7 +43,7 @@ export default function JobDescriptionScreen() {
     const fetchJobDetails = async () => {
       try {
         setIsLoading(true)
-        const { data } = await axios.get('http://172.17.0.8:2000' + `/api/jobs/${jobId}`)
+        const { data } = await axios.get('http://localhost:2000' + `/api/jobs/${jobId}`)
         // Access the job property from the response and provide default values
         setJob({
           ...data.job,

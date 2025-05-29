@@ -38,6 +38,11 @@ function HomeScreen() {
     fetchJobs()
   }, [])
 
+  // Fetch user profile when component mounts
+  const current_user = localStorage.getItem('user')
+  const user_data = JSON.parse(current_user)
+  console.log('Current User Data:', user_data)
+  
   // Group jobs by service category
   const jobsByCategory = jobs.reduce((acc, job) => {
     const category = job.service.name_en
@@ -66,10 +71,13 @@ function HomeScreen() {
                 <div className="profile-avatar">
                   <FaUser size={40} />
                 </div>
-                <h2>Karibu Kazi Kitaa</h2>
-                <p>Timiza ndoto zako za kikazi</p>
+                <h2>{user_data.full_name}</h2>
+                <p>{user_data.role}</p>
                 <div className="profile-view-btn">
-                  <button>Angalia Wasifu Wako</button>
+                  <button onClick={ 
+                    (event)=>{event.preventDefault()
+                      navigate(`/profile/${user_data.id}`)
+                    } }>Angalia Wasifu Wako</button>
                 </div>
               </div>
               <div className="profile-stats">

@@ -51,7 +51,7 @@ export default function HeaderNav() {
                   <Link to="/" className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}>
                     <FaHome /> {language === 'sw' ? 'Nyumbani' : 'Home'}
                   </Link>
-                  <Link to="/find-workers" className={`nav-link ${location.pathname === '/find-workers' ? 'active' : ''}`}>
+                  <Link to="/services" className={`nav-link ${location.pathname === '/find-workers' ? 'active' : ''}`}>
                     <FaSearch /> {language === 'sw' ? 'Tafuta Wafanyakazi' : 'Find Workers'}
                   </Link>
                   <Link to="/new" className={`nav-link ${location.pathname === '/post-job' ? 'active' : ''}`}>

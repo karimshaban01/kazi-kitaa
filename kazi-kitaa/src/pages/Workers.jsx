@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios'
 import HeaderNav from './Header'
-import './JobDescription.css'
 import { 
   FaBriefcase, 
   FaMapMarkerAlt, 
@@ -11,7 +10,7 @@ import {
   FaMoneyBillWave
 } from 'react-icons/fa'
 
-export default function JobsScreen() {
+export default function WorkersScreen() {
   const navigate = useNavigate()
   const location = useLocation()
   const [searchQuery, setSearchQuery] = useState(location.state?.query || '')
@@ -30,7 +29,7 @@ export default function JobsScreen() {
     const fetchJobs = async () => {
       try {
         setLoading(true)
-        const response = await axios.get('http://localhost:2000/api/jobs/list')
+        const response = await axios.get('http://172.17.0.8:2000/api/jobs/list')
         setJobs(response.data)
         console.log('Fetched jobs:', response.data)
         setError(null)
@@ -165,7 +164,7 @@ export default function JobsScreen() {
                       View Details
                     </button>
                     <button 
-                      className="apply-btn"
+                      className="action-btn apply-btn"
                       onClick={(e) => {
                         e.stopPropagation()
                         navigate(`/jobs/${job.id}/apply`)

@@ -23,6 +23,8 @@ import RatingScreen from './pages/Rating'
 import AdminDashboard from './pages/Admin'
 import OfflineScreen from './pages/Offline'
 import JobDescriptionScreen from './pages/JobDescription'
+import WorkersScreen from './pages/Workers'
+import SupportScreen from './pages/Support'
 
 function App() {
   const [location, setLocation] = useState('')
@@ -53,7 +55,7 @@ function App() {
             <Route path="/jobs" element={<JobScreen></JobScreen>} />
             <Route path="/new" element={<NewScreen></NewScreen>} />
             <Route path="/profile/:userId" element={<ProfileScreen></ProfileScreen>}></Route>
-            <Route path="/bids" element={<BidsScreen></BidsScreen>}></Route>
+            <Route path="/jobs/:jobId/bids" element={<BidsScreen></BidsScreen>}></Route>
             <Route path="/payments" element={<PaymentScreen></PaymentScreen>}></Route>
             <Route path="/refund" element={<RefundScreen></RefundScreen>}></Route>
             <Route path="/reviews" element={<ReviewScreen></ReviewScreen>}></Route>
@@ -70,6 +72,8 @@ function App() {
             <Route path='/admin' element={<AdminDashboard />}></Route>
             <Route path="/offline" element={<OfflineScreen />}></Route>
             <Route path="/jobs/:jobId" element={<JobDescriptionScreen />}></Route>
+            <Route path='/services' element={<WorkersScreen />}></Route>
+            <Route path='/support' element={<SupportScreen />}></Route>
           </Routes>
       
     </Router>

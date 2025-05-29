@@ -46,7 +46,7 @@ export default function ProfileScreen() {
     const fetchUserProfile = async () => {
       try {
         setIsLoading(true)
-        const { data } = await axios.get(`http://172.17.0.8:2000/api/users/${userId}`, {
+        const { data } = await axios.get('http://localhost:2000'+`/api/users/${userId}`, {
           withCredentials: true,
           headers: {
             'Accept': 'application/json',
